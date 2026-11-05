@@ -31,7 +31,7 @@ scipy==1.11.4
 yfinance==0.2.45
 alpha-vantage==2.3.1
 ccxt==4.1.87
-ta-lib==0.4.28
+# ta-lib is installed from the git fork in backend/Dockerfile
 
 # News/API
 feedparser==6.0.10
