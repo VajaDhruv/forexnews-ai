@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import List, Optional
+from pydantic import field_validator
 import os
 
 
@@ -49,6 +50,13 @@ class Settings(BaseSettings):
         "https://finance.yahoo.com/rss/topstories",
     ]
 
+    @field_validator("NEWS_SOURCES", mode="before")
+    @classmethod
+    def parse_news_sources(cls, v):
+        if isinstance(v, str):
+            return [s.strip() for s in v.split(",") if s.strip()]
+        return v
+
     # Forex Pairs to Track
     FOREX_PAIRS: List[str] = [
         "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD", "NZDUSD",
@@ -56,6 +64,13 @@ class Settings(BaseSettings):
         "EURAUD", "EURCAD", "EURCHF", "GBPAUD", "GBPCAD", "GBPCHF",
         "AUDCAD", "AUDCHF", "AUDNZD", "CADCHF", "NZDCAD", "NZDCHF"
     ]
+
+    @field_validator("FOREX_PAIRS", mode="before")
+    @classmethod
+    def parse_forex_pairs(cls, v):
+        if isinstance(v, str):
+            return [s.strip() for s in v.split(",") if s.strip()]
+        return v
 
     # ML Model Settings
     MODEL_PATH: str = "/app/ml/models"
