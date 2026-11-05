@@ -275,7 +275,7 @@ async def analyze_sentiment(
     pair: Optional[str] = None
 ):
     """Analyze sentiment of arbitrary text"""
-    from app.main import sentiment_analyzer
+    from app.core.state import sentiment_analyzer
 
     if not sentiment_analyzer:
         raise HTTPException(status_code=503, detail="Sentiment analyzer not available")

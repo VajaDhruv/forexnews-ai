@@ -9,7 +9,7 @@ from app.config import settings
 from app.db.session import get_db
 from app.db.models import MarketSentiment, NewsArticle, SentimentLabel
 from app.schemas import MarketSentimentResponse, SentimentAnalysisRequest, SentimentAnalysisResponse
-from app.main import sentiment_analyzer
+from app.core.state import sentiment_analyzer
 
 router = APIRouter()
 logger = structlog.get_logger()

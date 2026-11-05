@@ -12,7 +12,7 @@ from app.schemas import (
     PredictionResponse, PredictionList, PredictionFilter,
     PredictionDirection as PredDirEnum
 )
-from app.main import prediction_engine
+from app.core.state import prediction_engine
 
 router = APIRouter()
 logger = structlog.get_logger()

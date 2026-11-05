@@ -3,7 +3,7 @@ from typing import Optional
 import json
 import structlog
 
-from app.main import manager, prediction_engine, news_service, forex_service, sentiment_analyzer
+from app.core.state import manager, prediction_engine, news_service, forex_service, sentiment_analyzer
 from app.schemas import WSMessage, WSSubscribeMessage, WSUnsubscribeMessage, WSGetLatestMessage
 
 router = APIRouter()

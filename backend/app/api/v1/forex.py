@@ -11,7 +11,7 @@ from app.db.models import ForexPrice
 from app.schemas import (
     ForexPriceResponse, CurrentPriceResponse, PairStats, SystemStats
 )
-from app.main import forex_service
+from app.core.state import forex_service
 
 router = APIRouter()
 logger = structlog.get_logger()
@@ -190,9 +190,8 @@ async def get_system_stats(
 ):
     """Get overall system statistics"""
 
-    from app.main import news_service, prediction_engine
+    from app.core.state import news_service, prediction_engine, manager
     from app.db.models import NewsArticle, Prediction
-    from app.ws.manager import manager
 
     cutoff = datetime.utcnow() - timedelta(hours=24)
 

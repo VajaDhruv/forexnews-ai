@@ -5,7 +5,6 @@ from fastapi.responses import JSONResponse
 import asyncio
 import json
 import logging
-from typing import Dict, List, Set
 from datetime import datetime
 
 from app.config import settings
@@ -16,80 +15,21 @@ from app.services.forex_data import ForexDataService
 from app.services.prediction_engine import PredictionEngine
 from app.ml.models.sentiment_analyzer import SentimentAnalyzer
 from app.ml.models.market_predictor import MarketPredictor
+from app.ws.manager import ConnectionManager
+from app.core.state import (
+    news_service, forex_service, prediction_engine,
+    sentiment_analyzer, market_predictor, manager
+)
 
 # Configure logging
 logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL))
 logger = logging.getLogger(__name__)
 
-# Global services
-news_service: NewsIngestionService = None
-forex_service: ForexDataService = None
-prediction_engine: PredictionEngine = None
-sentiment_analyzer: SentimentAnalyzer = None
-market_predictor: MarketPredictor = None
-
-# WebSocket connection manager
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: Dict[str, Set[WebSocket]] = {}
-        self.subscriptions: Dict[WebSocket, Set[str]] = {}
-
-    async def connect(self, websocket: WebSocket, client_id: str):
-        await websocket.accept()
-        if client_id not in self.active_connections:
-            self.active_connections[client_id] = set()
-        self.active_connections[client_id].add(websocket)
-        self.subscriptions[websocket] = set()
-        logger.info(f"Client {client_id} connected. Total connections: {sum(len(c) for c in self.active_connections.values())}")
-
-    def disconnect(self, websocket: WebSocket, client_id: str):
-        if client_id in self.active_connections:
-            self.active_connections[client_id].discard(websocket)
-            if not self.active_connections[client_id]:
-                del self.active_connections[client_id]
-        if websocket in self.subscriptions:
-            del self.subscriptions[websocket]
-        logger.info(f"Client {client_id} disconnected")
-
-    def subscribe(self, websocket: WebSocket, topics: List[str]):
-        if websocket in self.subscriptions:
-            self.subscriptions[websocket].update(topics)
-
-    def unsubscribe(self, websocket: WebSocket, topics: List[str]):
-        if websocket in self.subscriptions:
-            self.subscriptions[websocket].difference_update(topics)
-
-    async def broadcast(self, topic: str, message: dict):
-        disconnected = []
-        for ws, topics in self.subscriptions.items():
-            if topic in topics or "all" in topics:
-                try:
-                    await ws.send_json(message)
-                except Exception:
-                    disconnected.append(ws)
-
-        for ws in disconnected:
-            for client_id, conns in self.active_connections.items():
-                if ws in conns:
-                    self.disconnect(ws, client_id)
-                    break
-
-    async def send_personal(self, websocket: WebSocket, message: dict):
-        try:
-            await websocket.send_json(message)
-        except Exception:
-            for client_id, conns in self.active_connections.items():
-                if websocket in conns:
-                    self.disconnect(websocket, client_id)
-                    break
-
-
-manager = ConnectionManager()
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global news_service, forex_service, prediction_engine, sentiment_analyzer, market_predictor
+    # Use global from state module
+    from app.core import state as app_state
 
     logger.info("Starting ForexNews AI...")
 
@@ -97,26 +37,29 @@ async def lifespan(app: FastAPI):
     await init_db()
 
     # Initialize ML models
-    sentiment_analyzer = SentimentAnalyzer()
-    await sentiment_analyzer.load_model()
+    app_state.sentiment_analyzer = SentimentAnalyzer()
+    await app_state.sentiment_analyzer.load_model()
 
-    market_predictor = MarketPredictor()
-    await market_predictor.load_models()
+    app_state.market_predictor = MarketPredictor()
+    await app_state.market_predictor.load_models()
 
     # Initialize services
-    news_service = NewsIngestionService(sentiment_analyzer)
-    forex_service = ForexDataService()
-    prediction_engine = PredictionEngine(
-        sentiment_analyzer=sentiment_analyzer,
-        market_predictor=market_predictor,
-        forex_service=forex_service,
-        news_service=news_service
+    app_state.news_service = NewsIngestionService(app_state.sentiment_analyzer)
+    app_state.forex_service = ForexDataService()
+    app_state.prediction_engine = PredictionEngine(
+        sentiment_analyzer=app_state.sentiment_analyzer,
+        market_predictor=app_state.market_predictor,
+        forex_service=app_state.forex_service,
+        news_service=app_state.news_service
     )
 
+    # Initialize WebSocket manager
+    app_state.manager = ConnectionManager()
+
     # Start background tasks
-    asyncio.create_task(news_service.start_ingestion_loop())
-    asyncio.create_task(forex_service.start_price_stream())
-    asyncio.create_task(prediction_engine.start_prediction_loop())
+    asyncio.create_task(app_state.news_service.start_ingestion_loop())
+    asyncio.create_task(app_state.forex_service.start_price_stream())
+    asyncio.create_task(app_state.prediction_engine.start_prediction_loop())
     asyncio.create_task(websocket_heartbeat())
 
     logger.info("ForexNews AI started successfully")
@@ -124,9 +67,9 @@ async def lifespan(app: FastAPI):
     yield
 
     logger.info("Shutting down ForexNews AI...")
-    await news_service.stop()
-    await forex_service.stop()
-    await prediction_engine.stop()
+    await app_state.news_service.stop()
+    await app_state.forex_service.stop()
+    await app_state.prediction_engine.stop()
     await close_db()
     logger.info("ForexNews AI shutdown complete")
 
