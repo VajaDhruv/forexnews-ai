@@ -25,7 +25,7 @@ RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
     rm -rf ta-lib ta-lib-0.4.0-src.tar.gz
 
 # Copy requirements and install Python dependencies
-COPY requirements.txt .
+COPY backend/requirements.txt .
 
 # Install numpy first (required for ta-lib build)
 RUN pip install --no-cache-dir numpy==1.26.3
@@ -40,7 +40,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN python -m spacy download en_core_web_sm
 
 # Copy application code
-COPY . .
+COPY backend/ .
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
