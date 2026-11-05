@@ -38,39 +38,33 @@ class Settings(BaseSettings):
     OANDA_ACCOUNT_ID: Optional[str] = None
     OANDA_ENVIRONMENT: str = "practice"
 
-    # News Sources
-    NEWS_SOURCES: List[str] = [
-        "https://www.forexfactory.com/ffcal_week_this.xml",
-        "https://www.investing.com/rss/news_285.rss",
-        "https://www.dailyfx.com/feeds/market_news",
-        "https://feeds.bloomberg.com/markets/news.rss",
-        "https://www.reuters.com/business/finance/rss",
-        "https://www.cnbc.com/id/10000113/device/rss/rss.html",
-        "https://www.marketwatch.com/rss/topstories",
-        "https://finance.yahoo.com/rss/topstories",
-    ]
+    # News Sources (comma-separated string from env, parsed to list via property)
+    NEWS_SOURCES_STR: str = (
+        "https://www.forexfactory.com/ffcal_week_this.xml,"
+        "https://www.investing.com/rss/news_285.rss,"
+        "https://www.dailyfx.com/feeds/market_news,"
+        "https://feeds.bloomberg.com/markets/news.rss,"
+        "https://www.reuters.com/business/finance/rss,"
+        "https://www.cnbc.com/id/10000113/device/rss/rss.html,"
+        "https://www.marketwatch.com/rss/topstories,"
+        "https://finance.yahoo.com/rss/topstories"
+    )
 
-    @field_validator("NEWS_SOURCES", mode="before")
-    @classmethod
-    def parse_news_sources(cls, v):
-        if isinstance(v, str):
-            return [s.strip() for s in v.split(",") if s.strip()]
-        return v
+    @property
+    def NEWS_SOURCES(self) -> List[str]:
+        return [s.strip() for s in self.NEWS_SOURCES_STR.split(",") if s.strip()]
 
-    # Forex Pairs to Track
-    FOREX_PAIRS: List[str] = [
-        "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD", "NZDUSD",
-        "EURGBP", "EURJPY", "GBPJPY", "AUDJPY", "CADJPY", "CHFJPY",
-        "EURAUD", "EURCAD", "EURCHF", "GBPAUD", "GBPCAD", "GBPCHF",
-        "AUDCAD", "AUDCHF", "AUDNZD", "CADCHF", "NZDCAD", "NZDCHF"
-    ]
+    # Forex Pairs to Track (comma-separated string from env, parsed to list via property)
+    FOREX_PAIRS_STR: str = (
+        "EURUSD,GBPUSD,USDJPY,USDCHF,AUDUSD,USDCAD,NZDUSD,"
+        "EURGBP,EURJPY,GBPJPY,AUDJPY,CADJPY,CHFJPY,"
+        "EURAUD,EURCAD,EURCHF,GBPAUD,GBPCAD,GBPCHF,"
+        "AUDCAD,AUDCHF,AUDNZD,CADCHF,NZDCAD,NZDCHF"
+    )
 
-    @field_validator("FOREX_PAIRS", mode="before")
-    @classmethod
-    def parse_forex_pairs(cls, v):
-        if isinstance(v, str):
-            return [s.strip() for s in v.split(",") if s.strip()]
-        return v
+    @property
+    def FOREX_PAIRS(self) -> List[str]:
+        return [s.strip() for s in self.FOREX_PAIRS_STR.split(",") if s.strip()]
 
     # ML Model Settings
     MODEL_PATH: str = "/app/ml/models"
