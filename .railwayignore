@@ -1,0 +1,19 @@
+# Host-only scripts
+start.sh
+start.bat
+run.bat
+
+# Local dev files
+.env
+.env.local
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
