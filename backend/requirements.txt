@@ -28,7 +28,7 @@ scikit-learn==1.4.0
 scipy==1.11.4
 
 # Financial Data
-yfinance==0.2.45
+yfinance==0.2.42
 alpha-vantage==2.3.1
 ccxt==4.1.87
 # ta-lib is installed from the git fork in backend/Dockerfile
